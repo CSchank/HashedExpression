@@ -257,4 +257,4 @@ script:
 - if [ "$BUILD" == "stack" ]; then stack --no-terminal $ARGS haddock --no-haddock-deps; fi
 - if [ "$BUILD" == "stack" ]; then stack --no-terminal $ARGS test; fi
 - if [ "$BUILD" == "stack" ]; then stack --no-terminal $ARGS bench; fi
-- if [ "$BUILD" == "cabal" ]; then buildscripts/build-cabal.sh; fi
+- if [ "$BUILD" == "cabal" ]; then $TRAVIS_BUILD_DIR/buildscripts/build-cabal.sh; fi
