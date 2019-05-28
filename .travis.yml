@@ -39,7 +39,23 @@ jobs:
     # should go in install part but don't want to waste time installing it each time
     - stack --no-terminal install hindent
     - hindent --validate src/*.hs test/*.hs
+    addons: {apt: {packages: [libgmp-dev]}}
+    env: CACHE_NAME=hin
     name: "hindent validation"
+
+  - script:
+    - stack --no-terminal haddock --no-haddock-deps
+    addons: {apt: {packages: [libgmp-dev]}}
+    env: CACHE_NAME=had
+    name: "haddock verification"
+    if: NOT (branch = master OR (branch = develop && type = push))
+
+  - script:
+    - stack --no-terminal test
+    addons: {apt: {packages: [libgmp-dev]}}
+    env: CACHE_NAME=tes
+    name: "test case verification"
+    if: NOT (branch = master OR (branch = develop && type = push))
 
   # We grab the appropriate GHC and cabal-install versions from hvr's PPA. See:
   # https://github.com/hvr/multi-ghc-travis
@@ -64,31 +80,30 @@ jobs:
   - env: BUILD=cabal GHCVER=8.0.2 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7
     compiler: ": #GHC 8.0.2"
     addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message =~ /(buildcabal)/
     
   - env: BUILD=cabal GHCVER=8.2.2 CABALVER=2.0 HAPPYVER=1.19.5 ALEXVER=3.1.7
     compiler: ": #GHC 8.2.2"
     addons: {apt: {packages: [cabal-install-2.0,ghc-8.2.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message =~ /(buildcabal)/
 
   - env: BUILD=cabal GHCVER=8.4.4 CABALVER=2.2 HAPPYVER=1.19.5 ALEXVER=3.1.7
     compiler: ": #GHC 8.4.4"
     addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.4,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message =~ /(buildcabal)/
     
 
   - env: BUILD=cabal GHCVER=8.6.3 CABALVER=2.4 HAPPYVER=1.19.5 ALEXVER=3.1.7
     compiler: ": #GHC 8.6.3"
     addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.3,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message =~ /(buildcabal)/
 
   # Build with the newest GHC and cabal-install. This is an accepted failure,
   # see below.
   - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
     compiler: ": #GHC HEAD"
     addons: {apt: {packages: [cabal-install-head,ghc-head,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-    if: branch = master OR (branch = develop && type = push)
-
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message =~ /(buildcabal)/
   # The Stack builds. We can pass in arbitrary Stack arguments via the ARGS
   # variable, such as using --stack-yaml to point to a different file.
 
@@ -96,6 +111,8 @@ jobs:
   - env: BUILD=stack ARGS=""
     compiler: ": #stack default"
     addons: {apt: {packages: [libgmp-dev]}}
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/
+
 
   #- env: BUILD=stack ARGS="--resolver lts-2"
   #  compiler: ": #stack 7.8.4"
@@ -116,34 +133,34 @@ jobs:
   - env: BUILD=stack ARGS="--resolver lts-9"
     compiler: ": #stack 8.0.2"
     addons: {apt: {packages: [libgmp-dev]}}
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/
 
   - env: BUILD=stack ARGS="--resolver lts-11"
     compiler: ": #stack 8.2.2"
     addons: {apt: {packages: [libgmp-dev]}}
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/
 
   - env: BUILD=stack ARGS="--resolver lts-12"
     compiler: ": #stack 8.4.4"
     addons: {apt: {packages: [libgmp-dev]}}
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/
     
   - env: BUILD=stack ARGS="--resolver lts-13"
     compiler: ": #stack 8.6.3"
     addons: {apt: {packages: [libgmp-dev]}}
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/
     
   # Nightly builds are allowed to fail
   - env: BUILD=stack ARGS="--resolver nightly"
     compiler: ": #stack nightly"
     addons: {apt: {packages: [libgmp-dev]}}
-    if: branch = master OR (branch = develop && type = push) OR type = cron
+    if: (branch = master OR (branch = develop && type = push) OR type = cron) AND commit_message !~ /(nostack|nonightly)/
     
   # Build on macOS in addition to Linux
   - env: BUILD=stack ARGS=""
     compiler: ": #stack default osx"
     os: osx
-    if: branch = master OR (branch = develop && type = push) OR type = cron
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/ AND commit_message =~ /(buildmacos)/
     
 
   # Travis includes an macOS which is incompatible with GHC 7.8.4
@@ -166,30 +183,30 @@ jobs:
   - env: BUILD=stack ARGS="--resolver lts-9"
     compiler: ": #stack 8.0.2 osx"
     os: osx
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/ AND commit_message =~ /(buildmacos)/
 
   - env: BUILD=stack ARGS="--resolver lts-11"
     compiler: ": #stack 8.2.2 osx"
     os: osx
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/ AND commit_message =~ /(buildmacos)/
 
   - env: BUILD=stack ARGS="--resolver lts-12"
     compiler: ": #stack 8.4.4 osx"
     os: osx
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/ AND commit_message =~ /(buildmacos)/
 
   - env: BUILD=stack ARGS="--resolver lts-13"
     compiler: ": #stack 8.6.3 osx"
     os: osx
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/ AND commit_message =~ /(buildmacos)/
 
   - env: BUILD=stack ARGS="--resolver nightly"
     compiler: ": #stack nightly osx"
     os: osx
-    if: branch = master OR (branch = develop && type = push)
+    if: (branch = master OR (branch = develop && type = push)) AND commit_message !~ /(nostack)/ AND commit_message =~ /(buildmacos)/
 
   allow_failures:
-  - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
+  # - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
   - env: BUILD=stack ARGS="--resolver nightly"
 
 before_install:
